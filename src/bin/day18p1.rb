@@ -18,7 +18,7 @@ tokenses = lines.map do |line|
     when '('
       a = []
       tokens << a
-      stk << tokensda
+      stk << tokens
       tokens = a
     when ')'
       tokens = stk.pop
