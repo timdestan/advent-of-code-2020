@@ -6,9 +6,8 @@ paths = []
 IO.readlines("data/day24input.txt").each do |line|
   paths << line.scan(/(e|se|sw|w|nw|ne)/).map { |x| x[0].to_sym }
 end
-# puts paths.inspect
 
-$deltas = {
+DELTAS = {
   :e => [1, 0],
   :se => [0, -1],
   :sw => [-1, -1],
@@ -16,13 +15,14 @@ $deltas = {
   :nw => [0, 1],
   :ne => [1, 1]
 }
+DELTA_VALS = DELTAS.values
 
 state = Hash.new(false)
 paths.each do |path|
   x = 0
   y = 0
   path.each do |p|
-    dx, dy = $deltas[p]
+    dx, dy = DELTAS[p]
     x += dx
     y += dy
   end
@@ -32,44 +32,43 @@ end
 puts "Num flipped: #{state.values.filter{|x| x }.size}"
 
 def neighbors(x, y)
-  $deltas.values.map { |dx, dy| [x + dx, y + dy]}
+  DELTA_VALS.each do |dx, dy|
+    yield [x + dx, y + dy]
+  end
 end
 
-$ndays = 100
-$ndays.times do |day|
-  puts "Day #{day+1}"
-  black_tiles = state.filter {|k,v| v}.map { |k,v| k}
+100.times do
   black_tiles_to_flip = []
   adjacent_white_tiles = []
-  black_tiles.each do |x, y|
-    ns = neighbors(x, y)
-    # puts "x = #{x}, y = #{y}, ns = #{ns.inspect}"
-
-    adjacent_white_tiles += ns.filter {|x, y|
-      !state[[x,y]]
-    }
-    num_black_neighbors = ns.filter {|x, y| state[[x,y]]}.size
+  state.each do |k, v|
+    next unless v
+    x, y = k
+    num_black_neighbors = 0
+    neighbors(x, y) do |tile|
+      if state[tile]
+        num_black_neighbors += 1
+      else
+        adjacent_white_tiles << tile
+      end
+    end
     if num_black_neighbors == 0 || num_black_neighbors > 2
-      black_tiles_to_flip << [x, y]
+      black_tiles_to_flip << k
     end
   end
   adjacent_white_tiles.uniq!
   white_tiles_to_flip = []
   adjacent_white_tiles.each do |x, y|
-    ns = neighbors(x, y)
-    # puts "x = #{x}, y = #{y}, ns = #{ns.inspect}"
-    num_black_neighbors = ns.filter {|x, y| state[[x,y]]}.size
+    num_black_neighbors = 0
+    neighbors(x, y) do |tile|
+      num_black_neighbors += 1 if state[tile]
+    end
     if num_black_neighbors == 2
       white_tiles_to_flip << [x, y]
     end
   end
-  fail('overlap') unless (black_tiles_to_flip & white_tiles_to_flip).empty?
-  (black_tiles_to_flip + white_tiles_to_flip).each do |x, y|
-    state[[x, y]] = !state[[x, y]]
+  (black_tiles_to_flip + white_tiles_to_flip).each do |t|
+    state[t] = !state[t]
   end
-  # puts "bt: #{black_tiles.inspect}"
-  # puts "awt: #{adjacent_white_tiles.inspect}"
-  # puts "bttf: #{black_tiles_to_flip.inspect}"
-  # puts "wttf: #{white_tiles_to_flip.inspect}"
-  puts "There are #{state.filter { |k,v| v}.count} black tiles."
 end
+
+puts "There are #{state.filter { |k,v| v}.count} black tiles."
