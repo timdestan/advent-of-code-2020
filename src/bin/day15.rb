@@ -6,11 +6,13 @@ inputs = IO.read("data/day15input.txt").split(',').map(&:to_i)
 
 curr = nil
 nextval = nil
-last = {}
-(0 .. (30000000 - 1)).each do |t|
+last = []
+t = 0
+n = 30000000
+while t < n
   curr = (t < inputs.size) ? inputs[t] : nextval
   nextval = last[curr] ? (t - last[curr]) : 0
   last[curr] = t
-  # puts "Turn #{t+1}: #{curr}"
+  t += 1
 end
 puts "Final: #{curr}"
