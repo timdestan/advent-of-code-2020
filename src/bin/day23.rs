@@ -31,10 +31,9 @@ fn find_to_move(next: &Vec<usize>, curr: usize) -> (usize, usize, usize) {
 }
 
 fn main() -> Result<(), GenError> {
-  let mut cups: Vec<usize> = read_cups()?;
+  let cups: Vec<usize> = read_cups()?;
   let mut next: Vec<usize> = build_next(&cups);
   let mut curr = cups[0];
-  cups.sort();
   let ncups = cups.len() as i32;
 
   let nmoves = 10_000_000;
@@ -45,7 +44,7 @@ fn main() -> Result<(), GenError> {
     let find_dest = |curr: usize| -> usize {
       let mut i = (curr as i32) - 2;
       loop {
-        let curr = cups[((i + ncups) % ncups) as usize];
+        let curr = ((i + ncups) % ncups) as usize + 1;
         if curr != x && curr != y && curr != z {
           return curr;
         }

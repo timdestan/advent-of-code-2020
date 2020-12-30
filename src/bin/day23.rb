@@ -6,7 +6,7 @@ $nmoves = 10_000_000
 
 cups = IO.read("data/day23input.txt").chomp.split('').map(&:to_i)
 cups += (cups.max + 1 .. 1_000_000).to_a
-n = cups.size
+$ncups = cups.size
 
 prev = nil
 $next = []
@@ -18,18 +18,17 @@ cups.each do |c|
 end
 $next[prev] = cups[0]
 
-$sorted = cups.sort
 curr = cups[0]
 cups = nil
 
-def find_dest(curr, excluded)
+def find_dest(curr, x, y, z)
   i = curr - 2
   loop do
-    x = $sorted[i % $sorted.size]
-    unless excluded.include? x
-      return x
+    curr = i % $ncups + 1
+    unless curr == x || curr == y || curr == z
+      return curr
     end
-    i = (i - 1) % $sorted.size
+    i -= 1
   end
 end
 
@@ -49,13 +48,12 @@ $nmoves.times do
   #   |c,i| i == curr ? "(#{c})" : c.to_s
   # }.join(' ')}"
   # puts "next = #{$next.inspect}"
-  to_move = find_to_move(curr)
+  x, y, z = find_to_move(curr)
   # puts "pick up: #{to_move.map(&:to_s).join(', ')}"
-  dest = find_dest(curr, to_move)
+  dest = find_dest(curr, x, y, z)
   # puts "destination: #{dest}"
 
   tmp = $next[dest]
-  x, y, z = to_move
   $next[curr] = $next[z]
   $next[dest] = x
   $next[x] = y
