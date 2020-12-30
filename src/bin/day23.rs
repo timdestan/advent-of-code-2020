@@ -35,6 +35,7 @@ fn main() -> Result<(), GenError> {
   let mut next: Vec<usize> = build_next(&cups);
   let mut curr = cups[0];
   cups.sort();
+  let ncups = cups.len() as i32;
 
   let nmoves = 10_000_000;
 
@@ -42,14 +43,13 @@ fn main() -> Result<(), GenError> {
     let (x, y, z) = find_to_move(&next, curr);
 
     let find_dest = |curr: usize| -> usize {
-      let mut i = cups.binary_search(&curr).unwrap();
-      i = i.wrapping_sub(1);
+      let mut i = (curr as i32) - 2;
       loop {
-        let curr = cups[i % cups.len()];
+        let curr = cups[((i + ncups) % ncups) as usize];
         if curr != x && curr != y && curr != z {
           return curr;
         }
-        i = i.wrapping_sub(1) % cups.len();
+        i -= 1;
       }
     };
     let dest = find_dest(curr);

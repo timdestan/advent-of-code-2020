@@ -23,8 +23,7 @@ curr = cups[0]
 cups = nil
 
 def find_dest(curr, excluded)
-  i = $sorted.bsearch_index { |x| x >= curr }
-  i -= 1
+  i = curr - 2
   loop do
     x = $sorted[i % $sorted.size]
     unless excluded.include? x
