@@ -7,19 +7,17 @@ $cube[0] = {}
 $cube[0][0] =
   IO.readlines("data/day17input.txt")
     .map(&:chomp).map.with_index do |l, i|
-  [i, l.split('').map.with_index{|x,j| [j,x]}.to_h]
+  [i, l.split('').map.with_index{|x,j| [j,x == '#']}.to_h]
 end.to_h
 
 def get(x, y, z, w)
-  if $cube[w].nil?
-    '.'
-  elsif $cube[w][z].nil?
-    '.'
-  elsif $cube[w][z][y].nil?
-    '.'
-  else
-    $cube[w][z][y][x] || '.'
-  end
+  cw = $cube[w]
+  return false if cw.nil?
+  cwz = cw[z]
+  return false if cwz.nil?
+  cwzy = cwz[y]
+  return false if cwzy.nil?
+  cwzy[x]
 end
 
 def print_cube
@@ -27,7 +25,7 @@ def print_cube
     cube.each do |z, square|
       puts "z = #{z}, w = #{w}"
       square.each do |y, xs|
-        puts xs.values.join('')
+        puts xs.values.map{|x| x ? '#' : '.'}.join('')
       end
       puts
     end
@@ -44,80 +42,74 @@ def all_states
   end.flatten
 end
 
-deltas = [-1, 0, 1]
-$xyzw_deltas = deltas.product(deltas).product(deltas).product(deltas)
-    .map(&:flatten)
-    .reject { |coords| coords.all?(&:zero?) }
+DELTAS = [-1, 0, 1]
 
-def neighbors(x, y, z, w)
-  arr = []
-  $xyzw_deltas.each do |dx,dy,dz,dw|
-    arr << [x+dx, y+dy, z+dz, w+dw]
+def num_active_neighbors(x, y, z, w)
+  n = 0
+  for dw in DELTAS do
+    cw = $cube[w+dw]
+    next if cw.nil?
+    for dz in DELTAS do
+      cwz = cw[z+dz]
+      next if cwz.nil?
+      for dy in DELTAS do
+        cwzy = cwz[y+dy]
+        next if cwzy.nil?
+        for dx in DELTAS do
+          next if dx == 0 && dy == 0 && dz == 0 && dw == 0
+          n += 1 if cwzy[x+dx]
+        end
+      end
+    end
   end
-  fail(arr.inspect) unless arr.size == 80
-  arr
-end
-
-def num_active(indices)
-  indices.filter do |args|
-    get(*args) == '#'
-  end.size
+  n
 end
 
 def next_state(x, y, z, w)
-  case get(x, y, z, w)
-  when '#'
-    n = num_active(neighbors(x, y, z, w))
-    if n == 2 || n == 3
-      '#'
-    else
-      '.'
-    end
-  when '.'
-    if num_active(neighbors(x, y, z, w)) == 3
-      '#'
-    else
-      '.'
-    end
+  n = num_active_neighbors(x, y, z, w)
+  if n < 2 || n > 3
+    false
+  elsif get(x, y, z, w)
+    n == 2 || n == 3
   else
-    fail 'bad state'
+    n == 3
   end
 end
 
-def spread(bounds)
-  [bounds[0] - 1, bounds[1] + 1]
+def spread(range)
+  (range.begin - 1 .. range.end + 1)
 end
 
-def range(bounds)
-  (bounds[0]..bounds[1])
+def keys_to_range(hash)
+  min, max = hash.keys.minmax
+  (min..max)
 end
 
 print_cube
 
-wb = $cube.keys.minmax
-zb = $cube[0].keys.minmax
-yb = $cube[0][0].keys.minmax
-xb = $cube[0][0][0].keys.minmax
+wb = keys_to_range($cube)
+zb = keys_to_range($cube[0])
+yb = keys_to_range($cube[0][0])
+xb = keys_to_range($cube[0][0][0])
 6.times do
   xb = spread(xb)
   yb = spread(yb)
   zb = spread(zb)
   wb = spread(wb)
   ns = {}
-  range(wb).each do |w|
-    ns[w] = {}
-    range(zb).each do |z|
-      ns[w][z] = {}
-      range(yb).each do |y|
-        ns[w][z][y] = {}
-        range(xb).each do |x|
-          ns[w][z][y][x] = next_state(x, y, z, w)
+  for w in wb
+    nsw = ns[w] = {}
+    for z in zb do
+      nswz = nsw[z] = {}
+      for y in yb do
+        nswzy = nswz[y] = {}
+        for x in xb do
+          nswzy[x] = next_state(x, y, z, w)
         end
       end
     end
   end
   $cube = ns
-  # print_cube
 end
 
-puts all_states.filter{|s| s == '#'}.size
+puts all_states.filter{|s| s}.size
